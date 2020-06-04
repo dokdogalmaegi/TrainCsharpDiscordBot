@@ -25,7 +25,7 @@ namespace SmartSpace_Discord
 
         public async Task MainAsync()
         {
-            await client.LoginAsync(TokenType.Bot, "discordBotToken"); // 봇 로그인
+            await client.LoginAsync(TokenType.Bot, "discordToken"); // 봇 로그인
             await client.StartAsync(); // 봇을 시작합니다.
 
             await Task.Delay(-1); // -1로 무한실행 - 계속 뒤에서 메인문이 돌아가게 해줍니다.
@@ -54,13 +54,21 @@ namespace SmartSpace_Discord
 
         private async Task MessageReceivedAsync(SocketMessage message) // SocketMessage - Type을 의미, message
         {
-            var rand = new Random();
+            Random rand = new Random();
+            EmbedBuilder builder = new EmbedBuilder();
+            // builder.WithThumbnailUrl("https://cdn.discordapp.com/attachments/558305011256393739/717986439261978686/unknown.png");
+            builder.AddField(name: "명령어", value: "!help - 현재 있는 명령어와 기본정보를 모두 보여줍니다.\n!주사위, !dice - 6개의 숫자를 랜덤으로 출력해줍니다." );
+            builder.WithColor(Color.Blue);
             if (message.Author.Id == client.CurrentUser.Id) // 봇이 명령어를 쳤을 때 아무 리턴값을 주지 않는다. - 예외처리
                 return;
 
             if (message.Content == "!주사위" || message.Content == "!dice") // 유저가 !주사위 또는 !dice라는 명령어를 디스코드에 입력하게 되면 
             {
                 await message.Channel.SendMessageAsync(rand.Next(1, 6).ToString()); // Random 함수를 사용하여 랜덤값을 반환하게 한다.
+            }
+            if (message.Content == "!help")
+            {
+                await message.Channel.SendMessageAsync("", false, builder.Build());
             }
         }
     }
