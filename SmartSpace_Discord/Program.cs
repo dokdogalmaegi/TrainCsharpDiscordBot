@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Discord.Audio;
 using System.Diagnostics;
 using Discord.Commands;
-using System.Runtime.InteropServices;
 using System.Reflection;
 
 namespace SmartSpace_Discord
