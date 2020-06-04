@@ -56,7 +56,7 @@ namespace SmartSpace_Discord
         {
             Random rand = new Random();
             EmbedBuilder builder = new EmbedBuilder();
-            // builder.WithThumbnailUrl("https://cdn.discordapp.com/attachments/558305011256393739/717986439261978686/unknown.png");
+            builder.WithThumbnailUrl("https://cdn.discordapp.com/attachments/558305011256393739/717986439261978686/unknown.png");
             builder.AddField(name: "명령어", value: "!help - 현재 있는 명령어와 기본정보를 모두 보여줍니다.\n!주사위, !dice - 6개의 숫자를 랜덤으로 출력해줍니다." );
             builder.WithColor(Color.Blue);
             if (message.Author.Id == client.CurrentUser.Id) // 봇이 명령어를 쳤을 때 아무 리턴값을 주지 않는다. - 예외처리
