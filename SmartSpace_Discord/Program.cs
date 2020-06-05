@@ -28,7 +28,7 @@ namespace SmartSpace_Discord // java - package
 
         public async Task MainAsync()
         {
-            await client.LoginAsync(TokenType.Bot, "NzA3NzI5NzA5MjM2MjI0MDgz.XtnlGQ.V0ok6Apn2qbRnFt6Fi7vVbFCtPY"); // 봇 로그인
+            await client.LoginAsync(TokenType.Bot, "discordToken"); // 봇 로그인
             await client.StartAsync(); // 봇을 시작합니다.
 
             command = new CommandService();
