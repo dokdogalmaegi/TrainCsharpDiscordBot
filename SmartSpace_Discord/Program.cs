@@ -28,7 +28,7 @@ namespace SmartSpace_Discord // java - package
 
         public async Task MainAsync()
         {
-            await client.LoginAsync(TokenType.Bot, "discordToken"); // 봇 로그인
+            await client.LoginAsync(TokenType.Bot, "NzA3NzI5NzA5MjM2MjI0MDgz.XtnlGQ.V0ok6Apn2qbRnFt6Fi7vVbFCtPY"); // 봇 로그인
             await client.StartAsync(); // 봇을 시작합니다.
 
             command = new CommandService();
@@ -78,28 +78,22 @@ namespace SmartSpace_Discord // java - package
         /// <returns>작업의 성공여부</returns>
         private Task Ready()
         {
-            Console.WriteLine($"{client.CurrentUser} 연결됨!"); // client.CurrentUser - 디스코드 봇을 으미ㅣ
+            Console.WriteLine($"{client.CurrentUser} 연결됨!"); // client.CurrentUser - 디스코드 봇을 의미
 
             return Task.CompletedTask; // 위 print문이 성공적으로 실행되면 Task가 끝났다는 것을 반환시켜줌
         }
 
         private async Task MessageReceivedAsync(SocketMessage message) // SocketMessage - Type을 의미, message
         {
-            var msg = message as SocketUserMessage;
-            if (msg == null) return;
+            SocketUserMessage msg = message as SocketUserMessage; // as - 캐스팅이 가능하다면 캐스팅된 값 안된다면 null 값
+            if (msg == null) return; // 캐스팅 실패 예외 처리
             int argPos = 0;
 
-            if (!(msg.HasCharPrefix('!', ref argPos) ||
-                msg.HasMentionPrefix(client.CurrentUser, ref argPos)) ||
-                msg.Author.IsBot)
-                return;
+            if (!(msg.HasCharPrefix('!', ref argPos) || msg.HasMentionPrefix(client.CurrentUser, ref argPos)) || msg.Author.IsBot) return; // !를 안붙이거나, 봇을 언급하거나, 봇인경우 예외처리
 
-            var context = new SocketCommandContext(client, msg);
+            SocketCommandContext context = new SocketCommandContext(client, msg); // context에 SocketCommandContext 생성
 
-            var result = await command.ExecuteAsync(
-                context: context,
-                argPos: argPos,
-                services: null);
+            var result = await command.ExecuteAsync(context: context, argPos: argPos, services: null); // 
         }
     }
 }
