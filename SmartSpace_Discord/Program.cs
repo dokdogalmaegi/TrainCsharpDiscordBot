@@ -7,12 +7,12 @@ using System.Diagnostics;
 using Discord.Commands;
 using System.Reflection;
 
-namespace SmartSpace_Discord
+namespace SmartSpace_Discord // java - package
 {
     class Program
     {
         private DiscordSocketClient client; // 전역 함수 client 변수 할당 Ex) Java - Scanner sc = new Scanner(System.in);
-        private CommandService command;
+        private CommandService command; // 전역함수 command 변수 할당
         static void Main(string[] args)
         {
             new Program().MainAsync().GetAwaiter().GetResult(); // MainAsync을 동기로 실행하지만 실제로는 비동기를 실행합니다. - MainAsync문 실행 -> GetAwaiter값을 받아올때까지 대기 -> GetResult 값을 받아오면 반환 <- 이 과정을 비동기로 처리
