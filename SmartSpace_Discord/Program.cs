@@ -93,7 +93,7 @@ namespace SmartSpace_Discord // java - package
 
             SocketCommandContext context = new SocketCommandContext(client, msg); // context에 SocketCommandContext 생성
 
-            var result = await command.ExecuteAsync(context: context, argPos: argPos, services: null); // 
+            var result = await command.ExecuteAsync(context: context, argPos: argPos, services: null); // 할당문이지만 await는 비동기 실행으로 뒤에 실행을 먼저하고 result(확인용)에 할당합니다.
         }
     }
 }

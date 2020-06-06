@@ -1,6 +1,8 @@
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SmartSpace_Discord // java - package
@@ -26,10 +28,10 @@ namespace SmartSpace_Discord // java - package
             else await _channel.DisconnectAsync();
         }
         [Command("dice", RunMode = RunMode.Async), Alias("주사위")]
-        public async Task Dice()
+        public async Task Dice(int maxNumber)
         {
             Random rand = new Random();
-            string dice = string.Format("주사위의 결과 : {0}", rand.Next(1, 6)); // 랜덤으로 1 ~ 6의 값을 받고 출력하기
+            string dice = string.Format("주사위의 결과 : {0}", rand.Next(1, maxNumber)); // 랜덤으로 1 ~ maxNumber의 값을 받고 출력하기
             await Context.Channel.SendMessageAsync(dice);
         }
         [Command("friends", RunMode = RunMode.Async), Alias("친구")]
@@ -72,11 +74,48 @@ namespace SmartSpace_Discord // java - package
         {
             builder = new EmbedBuilder();
             builder.WithThumbnailUrl("https://cdn.discordapp.com/attachments/558305011256393739/717986439261978686/unknown.png"); // embed 썸네일사진 설정
-            builder.AddField(name: "명령어", value: "!help - 현재 있는 명령어와 기본정보를 모두 보여줍니다.\n!주사위(dice) - 6개의 숫자를 랜덤으로 출력해줍니다.\n!들어와(join) {ChannelName} - ChannelName의 채널로 들어갑니다.\n!나가(leave) - 봇이 채널을 나갑니다."); // embed 설정
+            builder.AddField(name: "명령어", value: "!help - 현재 있는 명령어와 기본정보를 모두 보여줍니다.\n!주사위(dice) <maxNum> - <maxNum>개의 숫자를 랜덤으로 출력해줍니다.\n!들어와(join) <ChannelName> - ChannelName의 채널로 들어갑니다.\n!나가(leave) - 봇이 채널을 나갑니다.\n!팀(team) <TeamNum> - <TeamNum>만큼 팀을 나눠줍니다."); // embed 설정
             builder.WithTimestamp(DateTime.Now); // DateTime.Now로 현재 시간을 받아와 WithTimesteamp로 embed에 표시함
             builder.WithColor(Color.Blue); // embed 옆 바(bar)의 색깔을 Blue로 바꿔주는 역할을 합니다.
 
             await Context.Channel.SendMessageAsync("", false, builder.Build()); // Help문 실제 출력
+        }
+        [Command("team", RunMode = RunMode.Async), Alias("팀")]
+        public async Task Test(int teamCount, SocketVoiceChannel channel = null)
+        {
+            channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel as SocketVoiceChannel;
+            builder = new EmbedBuilder();
+            List<SocketGuildUser> users = new List<SocketGuildUser>(channel.Users);
+
+            Random rng = new Random();
+            int n = users.Count; 
+            while (n > 1) // 사람 수 만큼 계속 랜덤으로 섞입니다. Ex) 4명이면 4번 섞임
+            {
+                n--;
+                int k = rng.Next(n + 1);
+                SocketGuildUser value = users[k];
+                users[k] = users[n];
+                users[n] = value;
+            }
+
+            if(users.Count < teamCount) // 팀의 갯수가 채널의 이용자보다 많을 경우
+            {
+                await Context.Channel.SendMessageAsync("팀의 갯수가 채널의 인원보다 많습니다."); 
+                return; // return과 함께 메세지를 보냄
+            }
+
+            for (int i = 0; i < teamCount; i++) // 팀수만큼 for문 실행
+            {
+                string str = ""; // Embed에 넣을 문자열
+                for (int j = 0; j < users.Count / teamCount; j++) // users(유저수) / teamCount(팀수) = 한팀에 들어갈 인원 수만큼 for문이 돌아감 Ex) 4(명) / 2(팀) = 2(명)
+                {
+                    if (users[i].Nickname == null) str += users[i].Username; // users[i](while문에서 섞은 인원).Nickname(서버 내 닉네임)이 null이면 username(디스코드 자체 닉네임)을
+                    else str += users[i].Nickname; // users[i].Nickname이 존재한다면 Nickname을 string str에 넣습니다.
+                    str += "\n"; // 줄바꿈
+                }
+                builder.AddField(i + 1 + "번 팀",  str, true);
+            }
+            await Context.Channel.SendMessageAsync("", false, builder.Build()); // 마지막 출력
         }
     } 
 }
