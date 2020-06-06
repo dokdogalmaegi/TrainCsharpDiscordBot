@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Threading.Tasks;
 
 namespace SmartSpace_Discord // java - package
@@ -31,7 +32,7 @@ namespace SmartSpace_Discord // java - package
         public async Task Dice(int maxNumber)
         {
             Random rand = new Random();
-            string dice = string.Format("주사위의 결과 : {0}", rand.Next(1, maxNumber)); // 랜덤으로 1 ~ maxNumber의 값을 받고 출력하기
+            string dice = string.Format("주사위의 결과 : {0}", rand.Next(1, maxNumber + 1)); // 랜덤으로 1 ~ maxNumber의 값을 받고 출력하기
             await Context.Channel.SendMessageAsync(dice);
         }
         [Command("friends", RunMode = RunMode.Async), Alias("친구")]
@@ -81,7 +82,7 @@ namespace SmartSpace_Discord // java - package
             await Context.Channel.SendMessageAsync("", false, builder.Build()); // Help문 실제 출력
         }
         [Command("team", RunMode = RunMode.Async), Alias("팀")]
-        public async Task Test(int teamCount, SocketVoiceChannel channel = null)
+        public async Task Team(int teamCount, SocketVoiceChannel channel = null)
         {
             channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel as SocketVoiceChannel;
             builder = new EmbedBuilder();
@@ -116,6 +117,50 @@ namespace SmartSpace_Discord // java - package
                 builder.AddField(i + 1 + "번 팀",  str, true);
             }
             await Context.Channel.SendMessageAsync("", false, builder.Build()); // 마지막 출력
+        }
+        [Command("RPS", RunMode = RunMode.Async), Alias("묵찌빠, 짱깸뽀")]
+        public async Task RPC(string rps)
+        {
+            Random rand = new Random((int)DateTime.Now.Ticks);
+            EmbedBuilder builder = new EmbedBuilder
+            {
+                Color = new Color(255, 192, 203)
+            };
+            string strComputerrps = ""; // 컴퓨터의 가위바위보를 담을 문자열
+            int computerrps = rand.Next(1, 4); // 1, 2, 3
+
+            switch (computerrps)
+            {
+                case 1:
+                    strComputerrps = "가위";
+                    break;
+                case 2:
+                    strComputerrps = "바위";
+                    break;
+                case 3:
+                    strComputerrps = "보";
+                    break;
+            }
+            if(rps == strComputerrps) 
+            {
+                builder.AddField("플레이어", rps, true);
+                builder.AddField("컴퓨터", strComputerrps, true);
+                builder.AddField("결과", "무승부", true);
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }else if(rps == "가위" && strComputerrps == "보" || rps == "바위" && strComputerrps == "가위" || rps == "보" && strComputerrps == "바위")
+            {
+                builder.AddField("플레이어", rps, true);
+                builder.AddField("컴퓨터", strComputerrps, true);
+                builder.AddField("결과", "승리", true);
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+            else if(strComputerrps == "가위" && rps == "보" || strComputerrps == "바위" && rps == "가위" || strComputerrps == "보" && rps == "바위")
+            {
+                builder.AddField("플레이어", rps, true);
+                builder.AddField("컴퓨터", strComputerrps, true);
+                builder.AddField("결과", "패배", true);
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
         }
     } 
 }
