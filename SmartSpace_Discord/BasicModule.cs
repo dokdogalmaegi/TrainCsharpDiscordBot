@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace SmartSpace_Discord // java - package
 {
@@ -13,6 +14,7 @@ namespace SmartSpace_Discord // java - package
         static IVoiceChannel _channel;
         EmbedBuilder builder;
 
+        // 들어가기
         [Command("join", RunMode = RunMode.Async), Alias("들어와")] // message에 !join이 들어오면 아래 있는 함수를 실행시켜라
         public async Task JoinChannel(IVoiceChannel channel = null)
         {
@@ -22,19 +24,22 @@ namespace SmartSpace_Discord // java - package
             
             await _channel.ConnectAsync();
         }
+        // 나가기
         [Command("leave", RunMode = RunMode.Async), Alias("나가")] // message에 !leave이 들어오면 아래 있는 함수를 실행시켜라
         public async Task LeaveChannel()
         {
             if (_channel == null) { await Context.Channel.SendMessageAsync("봇이 길을 잃었습니다."); return; }
             else await _channel.DisconnectAsync();
         }
+        // 주사위
         [Command("dice", RunMode = RunMode.Async), Alias("주사위")]
         public async Task Dice(int maxNumber)
         {
-            Random rand = new Random();
+            Random rand = new Random((int)DateTime.Now.Ticks);
             string dice = string.Format("주사위의 결과 : {0}", rand.Next(1, maxNumber + 1)); // 랜덤으로 1 ~ maxNumber의 값을 받고 출력하기
             await Context.Channel.SendMessageAsync(dice);
         }
+        // 같은 게임을 하는사람
         [Command("friends", RunMode = RunMode.Async), Alias("친구")]
         public async Task Friends()
         {
@@ -70,17 +75,19 @@ namespace SmartSpace_Discord // java - package
             await Context.Channel.SendMessageAsync("", false, builder.Build()); // 채팅에 실제 출력
             // await Context.Channel.SendMessageAsync("없습니다."); ㅎㅎ...
         }
+        // help문
         [Command("help", RunMode = RunMode.Async), Alias("도와줘")]
         public async Task Help()
         {
             builder = new EmbedBuilder();
             builder.WithThumbnailUrl("https://cdn.discordapp.com/attachments/558305011256393739/717986439261978686/unknown.png"); // embed 썸네일사진 설정
-            builder.AddField(name: "명령어", value: "!help - 현재 있는 명령어와 기본정보를 모두 보여줍니다.\n!주사위(dice) <maxNum> - <maxNum>개의 숫자를 랜덤으로 출력해줍니다.\n!들어와(join) <ChannelName> - ChannelName의 채널로 들어갑니다.\n!나가(leave) - 봇이 채널을 나갑니다.\n!팀(team) <TeamNum> - <TeamNum>만큼 팀을 나눠줍니다."); // embed 설정
+            builder.AddField(name: "명령어", value: "!help - 현재 있는 명령어와 기본정보를 모두 보여줍니다.\n!주사위(dice) <maxNum> - <maxNum>개의 숫자를 랜덤으로 출력해줍니다.\n!들어와(join) <ChannelName> - ChannelName의 채널로 들어갑니다.\n!나가(leave) - 봇이 채널을 나갑니다.\n!팀(team) <TeamNum> - <TeamNum>만큼 팀을 나눠줍니다.\n!RPS(묵찌빠, 짱깸뽀) <가위|바위|보> - 가위바위보를 합니다."); // embed 설정
             builder.WithTimestamp(DateTime.Now); // DateTime.Now로 현재 시간을 받아와 WithTimesteamp로 embed에 표시함
             builder.WithColor(Color.Blue); // embed 옆 바(bar)의 색깔을 Blue로 바꿔주는 역할을 합니다.
 
             await Context.Channel.SendMessageAsync("", false, builder.Build()); // Help문 실제 출력
         }
+        // 팀 나누기
         [Command("team", RunMode = RunMode.Async), Alias("팀")]
         public async Task Team(int teamCount, SocketVoiceChannel channel = null)
         {
@@ -88,7 +95,7 @@ namespace SmartSpace_Discord // java - package
             builder = new EmbedBuilder();
             List<SocketGuildUser> users = new List<SocketGuildUser>(channel.Users);
 
-            Random rng = new Random();
+            Random rng = new Random((int)DateTime.Now.Ticks);
             int n = users.Count; 
             while (n > 1) // 사람 수 만큼 계속 랜덤으로 섞입니다. Ex) 4명이면 4번 섞임
             {
@@ -118,6 +125,7 @@ namespace SmartSpace_Discord // java - package
             }
             await Context.Channel.SendMessageAsync("", false, builder.Build()); // 마지막 출력
         }
+        // 가위바위보
         [Command("RPS", RunMode = RunMode.Async), Alias("묵찌빠, 짱깸뽀")]
         public async Task RPC(string rps)
         {
@@ -161,6 +169,31 @@ namespace SmartSpace_Discord // java - package
                 builder.AddField("결과", "패배", true);
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
+        }
+        [Command("지건", RunMode = RunMode.Async), Alias("G")]
+        public async Task Gun()
+        {
+            await Context.User.SendMessageAsync(String.Format("{0} 지건 딱대!", Context.User.Username.ToString()));
+        }
+        [Command("명언", RunMode = RunMode.Async)]
+        public async Task Saying()
+        {
+            Random rand = new Random((int)DateTime.Now.Ticks);
+            EmbedBuilder builder = new EmbedBuilder();
+            List<string> saying = new List<string>();
+            List<string> people = new List<string>();
+            int randNum = rand.Next(2);
+
+            saying.Add("인생은 활동함으로써 값어치가 있으며 빈곤한 휴식은 죽음을 의미한다.");
+            people.Add("볼테르");
+            saying.Add("우리가 존중해야하는 것은 단순한 삶이 아니라 올바른 삶이다.");
+            people.Add("소크라테스");
+
+            builder.AddField("말한이", people[randNum]);
+            builder.AddField("글귀", saying[randNum]);
+            builder.Color = new Color(249, 153, 106);
+
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
     } 
 }
