@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.IO;
 
 namespace SmartSpace_Discord // java - package
 {
@@ -180,20 +183,27 @@ namespace SmartSpace_Discord // java - package
         {
             Random rand = new Random((int)DateTime.Now.Ticks);
             EmbedBuilder builder = new EmbedBuilder();
-            List<string> saying = new List<string>();
-            List<string> people = new List<string>();
-            int randNum = rand.Next(2);
+            //List<string> saying = new List<string>();
+            //List<string> people = new List<string>();
 
-            saying.Add("인생은 활동함으로써 값어치가 있으며 빈곤한 휴식은 죽음을 의미한다.");
-            people.Add("볼테르");
-            saying.Add("우리가 존중해야하는 것은 단순한 삶이 아니라 올바른 삶이다.");
-            people.Add("소크라테스");
+            //saying.Add("인생은 활동함으로써 값어치가 있으며 빈곤한 휴식은 죽음을 의미한다.");
+            //people.Add("볼테르");
+            //saying.Add("우리가 존중해야하는 것은 단순한 삶이 아니라 올바른 삶이다.");
+            //people.Add("소크라테스");
+            JArray sayingArr = JArray.Parse(File.ReadAllText("saying.json")); 
+            int randNum = rand.Next(sayingArr.Count);
+            var saying = sayingArr[randNum].ToObject<JObject>();
 
-            builder.AddField("말한이", people[randNum]);
-            builder.AddField("글귀", saying[randNum]);
+            builder.AddField("말한이", saying.Value<string>("author"));
+            builder.AddField("글귀", saying.Value<string>("saying"));
             builder.Color = new Color(249, 153, 106);
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+        [Command("test", RunMode = RunMode.Async)]
+        public async Task Test(IAudioChannel test_channel)
+        {
+            Console.WriteLine(await test_channel.ConnectAsync());
         }
     } 
 }
