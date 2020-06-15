@@ -15,6 +15,7 @@ using Discord.Audio;
 using VideoLibrary;
 using MediaToolkit.Model;
 using MediaToolkit;
+using System.Threading;
 
 namespace SmartSpace_Discord // java - package
 {
@@ -22,7 +23,8 @@ namespace SmartSpace_Discord // java - package
     {
         static IVoiceChannel _channel;
         static IAudioClient audio;
-        static AudioOutStream outStream; 
+        static AudioOutStream outStream;
+        static CancellationTokenSource cts;
         EmbedBuilder builder;
 
         private Process CreateStream(string path)
@@ -36,19 +38,20 @@ namespace SmartSpace_Discord // java - package
             });
         }
 
-        private async Task SendAsync(IAudioClient client, string path)
+        private async Task SendAsync(IAudioClient client, string path, CancellationToken ct)
         {
             // Create FFmpeg using the previous example
             var ffmpeg = CreateStream(path);
             using (var output = ffmpeg.StandardOutput.BaseStream)
             using (Stream discord = client.CreatePCMStream(AudioApplication.Music))
             {
+
                 try {
                     await Task.Delay(5000);
-                    while (true)
+                    while (!ct.IsCancellationRequested)
                     {
-                        byte[] buffer = new byte[153600];
-                        int byteCount = await output.ReadAsync(buffer, 0, 153600);
+                        byte[] buffer = new byte[192000];
+                        int byteCount = await output.ReadAsync(buffer, 0, 192000);
                         if (byteCount <= 0) break;
 
                         try
@@ -58,6 +61,8 @@ namespace SmartSpace_Discord // java - package
                         catch (Exception Ex)
                         {
                             Console.WriteLine(Ex.StackTrace);
+                            await discord.FlushAsync();
+                            break;
                         }
                     }
                 }
@@ -251,21 +256,29 @@ namespace SmartSpace_Discord // java - package
                 YouTube yt = YouTube.Default;
                 var video = await yt.GetVideoAsync(Url);
                 if (!Directory.Exists(Environment.CurrentDirectory + "\\musics\\")) Directory.CreateDirectory(Environment.CurrentDirectory + "\\musics\\");
+                
                 File.WriteAllBytes(Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", ""), video.GetBytes());
                 using (var engine = new Engine(@"C:\ffmpeg\bin\ffmpeg.exe"))
                 {
                     var inputFile = new MediaFile { Filename = Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", "") };
                     var outputFile = new MediaFile { Filename = Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", "").Replace(video.FileExtension, ".mp3") };
                     engine.Convert(inputFile, outputFile);
-                    File.Delete(Environment.CurrentDirectory + "\\musics\\" + video.FullName);
+                    File.Delete(Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", ""));
+                    Console.WriteLine("음악 파일 다운로드 완료");
                 }
-
-                await SendAsync(audio, Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(video.FileExtension, ".mp3"));
+                cts = new CancellationTokenSource();
+                await SendAsync(audio, Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", "").Replace(video.FileExtension, ".mp3"), cts.Token);
             }
             catch(Exception Ex)
             {
                 Console.WriteLine(Ex.StackTrace);
             }
+        }
+
+        [Command("s", RunMode = RunMode.Async), Alias("넘겨")]
+        public async Task Skip()
+        {
+            cts.Cancel();
         }
     } 
 }

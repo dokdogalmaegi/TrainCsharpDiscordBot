@@ -20,7 +20,10 @@ namespace SmartSpace_Discord // java - package
 
         public Program()
         {
-            client = new DiscordSocketClient();
+            client = new DiscordSocketClient(new DiscordSocketConfig()
+            {
+                LogLevel = LogSeverity.Debug
+            });
 
             client.Log += Log; // client.Log에서 받아온 값을 Log함수에 넘겨 처리한후 client.Log에 귀속합니다.
             client.Ready += Ready; // 준비 되었을 떄 실행되는 이벤트
@@ -31,7 +34,10 @@ namespace SmartSpace_Discord // java - package
             await client.LoginAsync(TokenType.Bot, "DiscordToken"); // 봇 로그인
             await client.StartAsync(); // 봇을 시작합니다.
 
-            command = new CommandService();
+            command = new CommandService(new CommandServiceConfig()
+            {
+                LogLevel = LogSeverity.Debug
+            });
             command.Log += Log;
             client.MessageReceived += MessageReceivedAsync; // MessageReceived 이벤트 핸들러에 MessageReceivedAsunc에서 받아온 실행문을 쌓아 이벤트를 실행한다.
             await command.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
@@ -65,12 +71,13 @@ namespace SmartSpace_Discord // java - package
             SocketUserMessage msg = message as SocketUserMessage; // as - 캐스팅이 가능하다면 캐스팅된 값 안된다면 null 값
             if (msg == null) return; // 캐스팅 실패 예외 처리
             int argPos = 0;
-
+            Console.WriteLine("명령어 수신 - " + message.Content);
             if (!(msg.HasCharPrefix('!', ref argPos) || msg.HasMentionPrefix(client.CurrentUser, ref argPos)) || msg.Author.IsBot) return; // !를 안붙이거나, 봇을 언급하거나, 봇인경우 예외처리
 
             SocketCommandContext context = new SocketCommandContext(client, msg); // context에 SocketCommandContext 생성
 
             var result = await command.ExecuteAsync(context: context, argPos: argPos, services: null); // 할당문이지만 await는 비동기 실행으로 뒤에 실행을 먼저하고 result(확인용)에 할당합니다.
+            if(result.IsSuccess) Console.WriteLine("명령어 처리 완료 - " + message.Content);
         }
     }
 }
