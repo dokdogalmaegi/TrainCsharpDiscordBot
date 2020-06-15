@@ -28,7 +28,7 @@ namespace SmartSpace_Discord // java - package
 
         public async Task MainAsync()
         {
-            await client.LoginAsync(TokenType.Bot, "discordToken"); // 봇 로그인
+            await client.LoginAsync(TokenType.Bot, "DiscordToken"); // 봇 로그인
             await client.StartAsync(); // 봇을 시작합니다.
 
             command = new CommandService();
@@ -47,29 +47,6 @@ namespace SmartSpace_Discord // java - package
         {
             Console.WriteLine(log.ToString()); // Log를 String으로 변환
             return Task.CompletedTask; // Log를 String으로 변환한 것을 성공적으로 끝낸후 Task가 끝났다는 것을 반환시켜줌
-        }
-
-        private Process CreateStream(string path)
-        {
-            return Process.Start(new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-            });
-        }
-
-        private async Task SendAsync(IAudioClient client, string path)
-        {
-            // Create FFmpeg using the previous example
-            using (var ffmpeg = CreateStream(path))
-            using (var output = ffmpeg.StandardOutput.BaseStream)
-            using (var discord = client.CreatePCMStream(AudioApplication.Mixed))
-            {
-                try { await output.CopyToAsync(discord); }
-                finally { await discord.FlushAsync(); }
-            }
         }
 
         /// <summary>

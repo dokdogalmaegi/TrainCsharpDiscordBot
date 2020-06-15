@@ -8,24 +8,72 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Discord.Audio.Streams;
 using System.IO;
+using System.Diagnostics;
+using Discord.Audio;
+using VideoLibrary;
+using MediaToolkit.Model;
+using MediaToolkit;
 
 namespace SmartSpace_Discord // java - package
 {
     public class BasicModule : ModuleBase<SocketCommandContext>
     {
         static IVoiceChannel _channel;
+        static IAudioClient audio;
+        static AudioOutStream outStream; 
         EmbedBuilder builder;
+
+        private Process CreateStream(string path)
+        {
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = @"ffmpeg",
+                Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+            });
+        }
+
+        private async Task SendAsync(IAudioClient client, string path)
+        {
+            // Create FFmpeg using the previous example
+            var ffmpeg = CreateStream(path);
+            using (var output = ffmpeg.StandardOutput.BaseStream)
+            using (Stream discord = client.CreatePCMStream(AudioApplication.Music))
+            {
+                try {
+                    await Task.Delay(5000);
+                    while (true)
+                    {
+                        byte[] buffer = new byte[153600];
+                        int byteCount = await output.ReadAsync(buffer, 0, 153600);
+                        if (byteCount <= 0) break;
+
+                        try
+                        {
+                            await discord.WriteAsync(buffer, 0, byteCount);
+                        }
+                        catch (Exception Ex)
+                        {
+                            Console.WriteLine(Ex.StackTrace);
+                        }
+                    }
+                }
+                finally { await discord.FlushAsync(); }
+            }
+        }
 
         // 들어가기
         [Command("join", RunMode = RunMode.Async), Alias("들어와")] // message에 !join이 들어오면 아래 있는 함수를 실행시켜라
         public async Task JoinChannel(IVoiceChannel channel = null)
         {
-            if (channel == null) { await Context.Channel.SendMessageAsync("User must be in a voice channel, or a voice channel must be passed as an argument."); return; }
+            if (channel == null) { await Context.Channel.SendMessageAsync("봇이 길을 잃었습니다. 어디로 들어가야 할까요?"); return; }
             // Get the audio channel
             _channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
             
-            await _channel.ConnectAsync();
+            audio = await _channel.ConnectAsync();
         }
         // 나가기
         [Command("leave", RunMode = RunMode.Async), Alias("나가")] // message에 !leave이 들어오면 아래 있는 함수를 실행시켜라
@@ -39,6 +87,7 @@ namespace SmartSpace_Discord // java - package
         public async Task Dice(int maxNumber)
         {
             Random rand = new Random((int)DateTime.Now.Ticks);
+            maxNumber = maxNumber == 0 ? 6 : maxNumber;
             string dice = string.Format("주사위의 결과 : {0}", rand.Next(1, maxNumber + 1)); // 랜덤으로 1 ~ maxNumber의 값을 받고 출력하기
             await Context.Channel.SendMessageAsync(dice);
         }
@@ -183,13 +232,7 @@ namespace SmartSpace_Discord // java - package
         {
             Random rand = new Random((int)DateTime.Now.Ticks);
             EmbedBuilder builder = new EmbedBuilder();
-            //List<string> saying = new List<string>();
-            //List<string> people = new List<string>();
 
-            //saying.Add("인생은 활동함으로써 값어치가 있으며 빈곤한 휴식은 죽음을 의미한다.");
-            //people.Add("볼테르");
-            //saying.Add("우리가 존중해야하는 것은 단순한 삶이 아니라 올바른 삶이다.");
-            //people.Add("소크라테스");
             JArray sayingArr = JArray.Parse(File.ReadAllText("saying.json")); 
             int randNum = rand.Next(sayingArr.Count);
             var saying = sayingArr[randNum].ToObject<JObject>();
@@ -200,10 +243,29 @@ namespace SmartSpace_Discord // java - package
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
-        [Command("test", RunMode = RunMode.Async)]
-        public async Task Test(IAudioChannel test_channel)
+        [Command("p", RunMode = RunMode.Async)]
+        public async Task Plus(string Url)
         {
-            Console.WriteLine(await test_channel.ConnectAsync());
+            try
+            {
+                YouTube yt = YouTube.Default;
+                var video = await yt.GetVideoAsync(Url);
+                if (!Directory.Exists(Environment.CurrentDirectory + "\\musics\\")) Directory.CreateDirectory(Environment.CurrentDirectory + "\\musics\\");
+                File.WriteAllBytes(Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", ""), video.GetBytes());
+                using (var engine = new Engine(@"C:\ffmpeg\bin\ffmpeg.exe"))
+                {
+                    var inputFile = new MediaFile { Filename = Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", "") };
+                    var outputFile = new MediaFile { Filename = Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(" ", "").Replace(video.FileExtension, ".mp3") };
+                    engine.Convert(inputFile, outputFile);
+                    File.Delete(Environment.CurrentDirectory + "\\musics\\" + video.FullName);
+                }
+
+                await SendAsync(audio, Environment.CurrentDirectory + "\\musics\\" + video.FullName.Replace(video.FileExtension, ".mp3"));
+            }
+            catch(Exception Ex)
+            {
+                Console.WriteLine(Ex.StackTrace);
+            }
         }
     } 
 }
